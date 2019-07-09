@@ -8,10 +8,10 @@ import {
     ValidateIf,
     ValidationArguments,
     ValidationError,
-} from "class-validator";
-import { IsEqualToProperty } from "../../utilities/validationUtilities";
-import { IValidatable } from "./ivalidatable";
-import { Movie } from "./movie";
+} from 'class-validator';
+import { IsEqualToProperty } from '../../utilities/validationUtilities';
+import { Movie } from '../../movie/models/movie';
+import { IValidatable } from '../../validator/validator.interface';
 
 /**
  * @swagger
@@ -64,7 +64,7 @@ export class Actor implements IValidatable {
     public actorId: string;
 
     @ValidateIf((x) => x.name !== undefined)
-    @IsEqualToProperty("name", (x) => (x as string).toLowerCase(),
+    @IsEqualToProperty('name', (x) => (x as string).toLowerCase(),
         {
             message: (args: ValidationArguments) => {
                 if ((args.object as Actor).name !== undefined) {
@@ -81,7 +81,7 @@ export class Actor implements IValidatable {
     @NotEquals((x) => x.trim.length() > 0)
     public name: string;
 
-    @Equals("Actor")
+    @Equals('Actor')
     public type: string;
 
     @IsNotEmpty()
@@ -101,7 +101,7 @@ export class Actor implements IValidatable {
         this.actorId = actorId;
         this.name = name;
         this.textSearch = textSearch;
-        this.type = "Actor";
+        this.type = 'Actor';
         this.key = key;
         this.birthYear = birthYear;
         this.profession = profession;
