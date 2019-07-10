@@ -1,6 +1,6 @@
 # Helium - WORK IN PROGRESS
 
-A reference app for using the Azure Web App for Containers service.
+A reference app for using Cloud Native best-practices on Azure with Typescript.
 
 # Contributing
 
