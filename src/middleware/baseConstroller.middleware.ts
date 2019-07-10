@@ -9,9 +9,6 @@ export class BaseControllerMiddleware implements NestMiddleware {
     @Inject('ConfigService') private config: ConfigService,
   ) {}
   use(req: Request, res: Response, next: Function) {
-    console.log('--------------------------------------');
-    console.log('In middleware');
-    console.log('--------------------------------------');
     const resource = req.params.resource;
     const singular = resource.slice(0, resource.length - 1);
     const singularCased = resource.charAt(0).toUpperCase() + singular.slice(1);
