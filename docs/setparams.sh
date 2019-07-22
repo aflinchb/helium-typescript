@@ -1,0 +1,10 @@
+export resourceGroupName=${heliumprefix}helium
+export acrName=${heliumprefix}heliumacr
+export appServicePlanName=${heliumprefix}heliumapp
+export cosmosDBName=${heliumprefix}cosmosdb
+export appInsightsName=${heliumprefix}_Insights
+export keyVaultName=${heliumprefix}heliumkeyvault
+export webAppName=${heliumprefix}helium
+export location=eastus
+export cosmosDBURL=https://${cosmosDBName}.documents.azure.com:443/
+export keyVaultURL=https://${keyVaultName}.vault.azure.net/
