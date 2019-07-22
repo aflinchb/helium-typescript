@@ -10,7 +10,7 @@ You should also have an active Azure subscription.
 
 Azure requires that certain resources have _unique_ names across Azure. In order to do that, it is neccessary to come up with a prefix to prepend to infrastructure item names. A good example of a unique prefix that may work would be your login alias or initials (if your alias was _mname_ for example, your container registry would be named _AAAheliumacr_). Run the commands below to set your desired prefix and set up the naming for your Azure resources.  
 
-If you'd prefer to have custom names and/or choose a custom location, please edit the setparams.sh file directly and run "source ~/helium/docs/setparams.sh
+If you'd prefer to have custom names and/or choose a custom location, please edit the setenv.sh file directly and run "source ~/helium/docs/setenv.sh
 
 ```bash
 # Clone the repo (if you haven't already)
@@ -19,13 +19,16 @@ git clone https://github.com/microsoft/helium-typescript helium
 # Set the desired prefix 
 heliumprefix={enter desired prefix}
 
-# Copy a local version of the setparams script to your home directory
-cp ~/helium/docs/setparams.sh ~/setparams.sh
-chmod +x ~/setparams.sh
+# Copy a local version of the setenv script to your home directory
+cp ~/helium/docs/setenv.sh ~/setenv.sh
+chmod +x ~/setenv.sh
 
-# Optional: Update the script if needed with custom naming/location
-nano ~/setparams.sh
-source ~/setparams.sh
+# Set environment variables
+source ~/setenv.sh
+
+# Optional: Update the script and environment with custom naming/location
+nano ~/setenv.sh
+source ~/setenv.sh
 ```
 
 ## Installing Required Tools
@@ -98,6 +101,17 @@ $ heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwnerTenan
   "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"
 }
 ```
+
+```bash
+# Create a .ssh folder (if it doesnt already exist)
+mkdir ~/.ssh
+
+# Save the SP for later
+echo $heliumSPpw > ~/.ssh/helium_sp_pwd
+echo $heliumSPAppId > ~/.ssh/helium_sp_appid
+echo $heliumSPTenantId > ~/.ssh/helium_SP_tenantid
+```
+
 Note: You may receive an error if you do not have sufficient permissions on your Azure subscription to create a service principal.  If this happens, contact a subscription administrator to determine whether you have contributor-level access to the subscription.
 
 There are some environments that that perform role assignments during the process of deployments.  In this case, the Service Principal requires Owner level access on the subscription.  Each environment where this is the case will document the requirements and whether or not there is a configuration option not requiring the Owner level privileges.
@@ -170,6 +184,7 @@ $ acrUsername=`az acr credential show -n $acrName | sed -n -e 's/^.*username": /
   "username": "{app_prefix}heliumacr"
 }
 ```
+
 ### Create your Application Service Plan
 
 In order to deploy a web application, an App Service Plan must first be created:
