@@ -8,7 +8,7 @@ You should also have an active Azure subscription.
 
 ## Decide on an Application Prefix and Resource Group Prefix
 
-Azure requires that certain resources have _unique_ names across Azure. In order to do that, it is neccessary to come up with a prefix to prepend to infrastructure item names. A good example of a unique prefix that may work would be your login alias or initials (if your alias was _mname_ for example, your container registry would be named _AAAheliumacr_). Run the commands below to set your desired prefix and set up the naming for your Azure resources.  
+Azure requires that certain resources have _unique_ names across Azure. In order to do that, it is neccessary to come up with a prefix to prepend to infrastructure item names. A good example of a unique prefix that may work would be your login alias or initials (if your alias was _AAA_ for example, your container registry would be named _AAAheliumacr_). Run the commands below to set your desired prefix and set up the naming for your Azure resources.  
 
 If you'd prefer to have custom names and/or choose a custom location, please edit the setenv.sh file directly and run "source ~/helium/docs/setenv.sh
 
