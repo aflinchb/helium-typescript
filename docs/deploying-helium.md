@@ -43,9 +43,9 @@ source ~/setenv.sh
 In order for the Helium demonstration to work, Azure infrastructure must first be deployed. The following list contains the ordered steps which need to be taken:
 
 1. [Login to Azure](#login-to-azure)
-2. [Create an Azure Service Principal](#create-an-azure-service-principal)
-3. [Create the Resource Group](#create-the-resource-group)
-4. [Create an Azure Container Registry](#create-an-azure-container-registry)
+2. [Create the Resource Group](#create-the-resource-group)
+3. [Create an Azure Container Registry](#create-an-azure-container-registry)
+4. [Create an Azure Service Principal](#create-azure-service-principals)
 5. [Create your Application Service Plan](#create-your-application-service-plan)
 6. [Create and Setup a CosmosDB](#create-and-setup-a-cosmosdb)
 7. [Configure Application Insights for Application Monitoring](#configure-application-insights-for-application-monitoring)
@@ -84,37 +84,6 @@ You can check if this is the default subscription using the below command
 ```bash
 $ az account list --output table
 ```
-
-### Create an Azure Service Principal
-
-You can generate an Azure Service Principal using the [`az ad sp create-for-rbac`](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az-ad-sp-create) command with `--skip-assignment` option. The `--skip-assignment` parameter limits any additional permissions from being assigned the default [`Contributor`](https://docs.microsoft.com/en-us/azure/role-based-access-control/rbac-and-directory-admin-roles#azure-rbac-roles) role in Azure subscription.
-
-```bash
-$ heliumSPpw=`az ad sp create-for-rbac -n http://$heliumacrsp --query password` && echo $heliumSPpw
-$ heliumSPAppId=`az ad sp show --id http://$heliumacrsp --query appId | tr -d '"'` && echo $heliumSPAppId
-$ heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwnerTenantId | tr -d '"'` && echo $heliumSPTenantId
-{
-  "appId": "50d65587-abcd-4619-1234-f99fb2ac0987",
-  "displayName": "azure-cli-2019-01-23-20-27-37",
-  "name": "http://azure-cli-2019-01-23-20-27-37",
-  "password": "3ac38e00-aaaa-bbbb-bb87-7222bc4b1f11",
-  "tenant": "72f988bf-86f1-41af-91ab-2d7cd011db47"
-}
-```
-
-```bash
-# Create a .ssh folder (if it doesnt already exist)
-mkdir ~/.ssh
-
-# Save the SP for later
-echo $heliumSPpw > ~/.ssh/helium_sp_pwd
-echo $heliumSPAppId > ~/.ssh/helium_sp_appid
-echo $heliumSPTenantId > ~/.ssh/helium_SP_tenantid
-```
-
-Note: You may receive an error if you do not have sufficient permissions on your Azure subscription to create a service principal.  If this happens, contact a subscription administrator to determine whether you have contributor-level access to the subscription.
-
-There are some environments that that perform role assignments during the process of deployments.  In this case, the Service Principal requires Owner level access on the subscription.  Each environment where this is the case will document the requirements and whether or not there is a configuration option not requiring the Owner level privileges.
 
 ### Create the Resource Group
 
@@ -162,35 +131,66 @@ $ az acr create -n $acrName --resource-group $resourceGroupName --sku Basic --ad
 }
 ```
 
-In order for the Docker command line interface to be able to push the container image of Helium which will be built in a later step, the username and password must be obtained first from the ACR. The credentials can be obtained thusly:
+### Create Azure Service Principals 
+
+You can generate an Azure Service Principal using the [`az ad sp create-for-rbac`](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az-ad-sp-create) command with `--skip-assignment` option. The `--skip-assignment` parameter limits any additional permissions from being assigned the default [`Contributor`](https://docs.microsoft.com/en-us/azure/role-based-access-control/rbac-and-directory-admin-roles#azure-rbac-roles) role in Azure subscription.
+
+Create service principals:
+* One for Key Vault.
+* One with pull only access to the acr.
+* One with push and pull access to the acr.
+* One with owner access to the acr.
 
 ```bash
-$ az acr credential show -n $acrName
+$ export heliumSPpw=`az ad sp create-for-rbac -n http://$heliumacrsp --query password --output tsv` && echo $heliumSPpw
+$ export heliumSPAppId=`az ad sp show --id http://$heliumacrsp --query appId --output tsv` && echo $heliumSPAppId 
+$ export heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwnerTenantId --output tsv` && echo $heliumSPTenantId
 
-# Run these to save the username first password as environment variables
-$ acrPW=`az acr credential show -n $acrName | sed -n -e 's/^.*value": / /p' | head -n 1` && echo $acrPW
-$ acrUsername=`az acr credential show -n $acrName | sed -n -e 's/^.*username": / /p' ` && echo $acrUsername
-{
-  "passwords": [
-    {
-      "name": "password",
-      "value": "ZZZZZZZZfA5fMQeTqu0oizqAbPx1uZZZ"
-    },
-    {
-      "name": "password2",
-      "value": "ZZZmJcizOfkM/bZJZhw9PpPLZZZZZZZZ"
-    }
-  ],
-  "username": "{app_prefix}heliumacr"
-}
+# Get the acr Id to define the scope
+$ export acrId=`az acr show -n $acrName -g $resourceGroupName --query "id" --output tsv` && echo $acrId
+
+# Pull only access
+$ export heliumSPpw_pull=`az ad sp create-for-rbac -n http://$heliumacrsp_pull --role acrpull --scope $acrId --query password --output tsv` && echo $heliumSPpw_pull
+$ export heliumSPAppId_pull=`az ad sp show --id http://$heliumacrsp_pull --query appId --output tsv` && echo $heliumSPAppId_pull
+
+# Push/Pull access
+$ export heliumSPpw_push=`az ad sp create-for-rbac -n http://$heliumacrsp_push --role acrpush --scope $acrId --query password --output tsv` && echo $heliumSPpw_push
+$ export heliumSPAppId_push=`az ad sp show --id http://$heliumacrsp_push --query appId --output tsv` && echo $heliumSPAppId_push
+
+# Owner access
+$ export heliumSPpw_owner=`az ad sp create-for-rbac -n http://$heliumacrsp_owner --role owner --scope $acrId --query password --output tsv` && echo $heliumSPpw_owner
+$ export heliumSPAppId_owner=`az ad sp show --id http://$heliumacrsp_owner --query appId --output tsv` && echo $heliumSPAppId_owner
 ```
+
+```bash
+# Create a .ssh folder (if it doesnt already exist)
+mkdir ~/.ssh
+
+# Save the SPs for later
+echo $heliumSPpw > ~/.ssh/helium_sp_pwd
+echo $heliumSPAppId > ~/.ssh/helium_sp_appid
+echo $heliumSPTenantId > ~/.ssh/helium_sp_tenantid
+
+echo $heliumSPpw_pull > ~/.ssh/helium_sp_pwd_pull
+echo $heliumSPAppId_pull > ~/.ssh/helium_sp_appid_pull
+
+echo $heliumSPpw_push > ~/.ssh/helium_sp_pwd_push
+echo $heliumSPAppId_push > ~/.ssh/helium_sp_appid_push
+
+echo $heliumSPpw_owner > ~/.ssh/helium_sp_pwd_owner
+echo $heliumSPAppId_owner > ~/.ssh/helium_sp_appid_owner
+```
+
+Note: You may receive an error if you do not have sufficient permissions on your Azure subscription to create a service principal.  If this happens, contact a subscription administrator to determine whether you have contributor-level access to the subscription.
+
+There are some environments that that perform role assignments during the process of deployments.  In this case, the Service Principal requires Owner level access on the subscription.  Each environment where this is the case will document the requirements and whether or not there is a configuration option not requiring the Owner level privileges.
 
 ### Create your Application Service Plan
 
 In order to deploy a web application, an App Service Plan must first be created:
 
 ```bash
-$ az appservice plan create -n $appServicePlanName --resource-group $resourceGroupName --sku B1 --is-linux
+$ az appservice plan create -n $appServicePlanName --resource-group $resourceGroupName --sku S1 --is-linux
 {
   "freeOfferExpirationTime": "2019-05-17T17:50:45.863333",
   "geoRegion": "East US",
@@ -303,12 +303,12 @@ Now that all neccessary Azure infrastructure has been spun up, it is time to bui
 
 It is finally time to build Helium and then push the container image to the Azure Container Registry (ACR) that was created earlier. 
 
-1. Change the directory to the directory which containes the Helium repository.
+1. Change the directory to the directory which contains the Helium repository.
 
 2. Login the Docker CLI to your ACR:
 
 ```bash
-$ az acr login -n $acrName
+$ docker login -u $heliumSPAppId_push -p $heliumSPpw_push ${acrName}.azurecr.io
 Login Succeeded
 ```
 
@@ -351,6 +351,8 @@ $ az webapp config appsettings set --resource-group $resourceGroupName -n $webAp
 $ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings TENANT_ID=$heliumSPTenantId
 $ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_SECRET=$heliumSPpw
 $ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_ID=$heliumSPAppId
+
+$ az webapp config container set -g $resourceGroupName -n $webAppName -i helium:canary -r https://${acrName}.azurecr.io -u $heliumSPAppId_owner -p $heliumSPpw_owner
 ```
 
 Note: Database environment variables are automatically set to defaults for the MovieInfo reference app, unless otherwise specified:
