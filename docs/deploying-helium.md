@@ -150,16 +150,19 @@ $ export heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwn
 $ export acrId=`az acr show -n $acrName -g $resourceGroupName --query "id" --output tsv` && echo $acrId
 
 # Pull only access
-$ export heliumSPpw_pull=`az ad sp create-for-rbac -n http://$heliumacrsp_pull --role acrpull --scope $acrId --query password --output tsv` && echo $heliumSPpw_pull
+$ export heliumSPpw_pull=`az ad sp create-for-rbac -n http://$heliumacrsp_pull --query password --output tsv` && echo $heliumSPpw_pull
 $ export heliumSPAppId_pull=`az ad sp show --id http://$heliumacrsp_pull --query appId --output tsv` && echo $heliumSPAppId_pull
+$ az role assignment create --assignee $heliumSPAppId_pull --role acrpull --scope $acrId
 
 # Push/Pull access
-$ export heliumSPpw_push=`az ad sp create-for-rbac -n http://$heliumacrsp_push --role acrpush --scope $acrId --query password --output tsv` && echo $heliumSPpw_push
+$ export heliumSPpw_push=`az ad sp create-for-rbac -n http://$heliumacrsp_push --query password --output tsv` && echo $heliumSPpw_push
 $ export heliumSPAppId_push=`az ad sp show --id http://$heliumacrsp_push --query appId --output tsv` && echo $heliumSPAppId_push
+$ az role assignment create --assignee $heliumSPAppId_push --role acrpush --scope $acrId
 
 # Owner access
-$ export heliumSPpw_owner=`az ad sp create-for-rbac -n http://$heliumacrsp_owner --role owner --scope $acrId --query password --output tsv` && echo $heliumSPpw_owner
+$ export heliumSPpw_owner=`az ad sp create-for-rbac -n http://$heliumacrsp_owner --query password --output tsv` && echo $heliumSPpw_owner
 $ export heliumSPAppId_owner=`az ad sp show --id http://$heliumacrsp_owner --query appId --output tsv` && echo $heliumSPAppId_owner
+$ az role assignment create --assignee $heliumSPAppId_owner --role owner --scope $acrId
 ```
 
 ```bash
@@ -304,6 +307,13 @@ Now that all neccessary Azure infrastructure has been spun up, it is time to bui
 It is finally time to build Helium and then push the container image to the Azure Container Registry (ACR) that was created earlier. 
 
 1. Change the directory to the directory which contains the Helium repository.
+
+OPTION:
+# Use az acr build instead of docker
+
+az acr login -n $acrName
+
+az acr build -t ${acrName}.azurecr.io/helium:canary --registry $acrName .
 
 2. Login the Docker CLI to your ACR:
 
