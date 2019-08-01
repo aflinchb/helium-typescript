@@ -56,33 +56,33 @@ In order for the Helium demonstration to work, Azure infrastructure must first b
 Make sure that the Azure Command Line Interface (CLI) is properly logged in to your Azure account:
 
 ```bash
-$ az login
-Note, we have launched a browser for you to login. For old experience with device code, use "az login --use-device-code"
-You have logged in. Now let us find all the subscriptions to which you have access...
-[
-  {
-    "cloudName": "AzureCloud",
-    "id": "zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz",
-    "isDefault": false,
-    "name": "Visual Studio Enterprise",
-    "state": "Enabled",
-    "tenantId": "zzzzzzzz-86f1-41af-zzzz-2d7cd011db47",
-    "user": {
-      "name": "zzzzzzz@microsoft.com",
-      "type": "user"
-    }
-  }, ...
+az login
+# Note, we have launched a browser for you to login. For old experience with device code, use # #"az login --use-device-code"
+# You have logged in. Now let us find all the subscriptions to which you have access...
+# [
+#   {
+#     "cloudName": "AzureCloud",
+#     "id": "zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz",
+#     "isDefault": false,
+#     "name": "Visual Studio Enterprise",
+#     "state": "Enabled",
+#     "tenantId": "zzzzzzzz-86f1-41af-zzzz-2d7cd011db47",
+#     "user": {
+#       "name": "zzzzzzz@microsoft.com",
+#       "type": "user"
+#     }
+#   }, ...
 ```
 If you have multiple subscriptions, make sure that the active subscription is "default". We see that the subscription here is not default (isDefault = false). Make this subscription the default one using the below command.  Replace "Visual Studio Enterprise" with the name of the subscription you want to use.
 
 ```bash
-$ az account set -s "Visual Studio Enterprise"
+az account set -s "Visual Studio Enterprise"
 ```
 
 You can check if this is the default subscription using the below command
 
 ```bash
-$ az account list --output table
+az account list --output table
 ```
 
 ### Create the Resource Group
@@ -90,18 +90,18 @@ $ az account list --output table
 The first thing which needs to be done is to create a resource group for Azure to hold the Helium infrastructure. To create the resource group execute the following:
 
 ```bash
-$ az group create -l $location -n $resourceGroupName
-{
-  "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium",
-  "location": "eastus",
-  "managedBy": null,
-  "name": "{app_prefix}helium",
-  "properties": {
-    "provisioningState": "Succeeded"
-  },
-  "tags": null,
-  "type": null
-}
+az group create -l $location -n $resourceGroupName
+# {
+#   "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium",
+#   "location": "eastus",
+#   "managedBy": null,
+#   "name": "{app_prefix}helium",
+#   "properties": {
+#     "provisioningState": "Succeeded"
+#   },
+#   "tags": null,
+#   "type": null
+# }
 ```
 
 ### Create an Azure Container Registry
@@ -109,26 +109,26 @@ $ az group create -l $location -n $resourceGroupName
 The Azure Container Registry (ACR) is where Docker container images are stored. This infrastructure can be created in the following manner:
 
 ```bash
-$ az acr create -n $acrName --resource-group $resourceGroupName --sku Basic --admin-enabled false -l $location
-{
-  "adminUserEnabled": true,
-  "creationDate": "2019-04-17T17:48:03.872192+00:00",
-  "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium/providers/Microsoft.ContainerRegistry/registries/{app_prefix}heliumacr",
-  "location": "eastus",
-  "loginServer": "{app_prefix}heliumacr.azurecr.io",
-  "name": "{app_prefix}heliumacr",
-  "networkRuleSet": null,
-  "provisioningState": "Succeeded",
-  "resourceGroup": "helium",
-  "sku": {
-    "name": "Basic",
-    "tier": "Basic"
-  },
-  "status": null,
-  "storageAccount": null,
-  "tags": {},
-  "type": "Microsoft.ContainerRegistry/registries"
-}
+az acr create -n $acrName --resource-group $resourceGroupName --sku Basic --admin-enabled false -l $location
+# {
+#   "adminUserEnabled": true,
+#   "creationDate": "2019-04-17T17:48:03.872192+00:00",
+#   "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium/providers/Microsoft.ContainerRegistry/registries/{app_prefix}heliumacr",
+#   "location": "eastus",
+#   "loginServer": "{app_prefix}heliumacr.azurecr.io",
+#   "name": "{app_prefix}heliumacr",
+#   "networkRuleSet": null,
+#   "provisioningState": "Succeeded",
+#   "resourceGroup": "helium",
+#   "sku": {
+#     "name": "Basic",
+#     "tier": "Basic"
+#   },
+#   "status": null,
+#   "storageAccount": null,
+#   "tags": {},
+#   "type": "Microsoft.ContainerRegistry/registries"
+# }
 ```
 
 ### Create Azure Service Principals 
@@ -142,27 +142,27 @@ Create service principals:
 * One with owner access to the acr.
 
 ```bash
-$ export heliumSPpw=`az ad sp create-for-rbac -n http://$heliumacrsp --query password --output tsv` && echo $heliumSPpw
-$ export heliumSPAppId=`az ad sp show --id http://$heliumacrsp --query appId --output tsv` && echo $heliumSPAppId 
-$ export heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwnerTenantId --output tsv` && echo $heliumSPTenantId
+export heliumSPpw=`az ad sp create-for-rbac -n http://$heliumacrsp --query password --output tsv` && echo $heliumSPpw
+export heliumSPAppId=`az ad sp show --id http://$heliumacrsp --query appId --output tsv` && echo $heliumSPAppId 
+export heliumSPTenantId=`az ad sp show --id http://$heliumacrsp --query appOwnerTenantId --output tsv` && echo $heliumSPTenantId
 
 # Get the acr Id to define the scope
-$ export acrId=`az acr show -n $acrName -g $resourceGroupName --query "id" --output tsv` && echo $acrId
+export acrId=`az acr show -n $acrName -g $resourceGroupName --query "id" --output tsv` && echo $acrId
 
 # Pull only access
-$ export heliumSPpw_pull=`az ad sp create-for-rbac -n http://$heliumacrsp_pull --query password --output tsv` && echo $heliumSPpw_pull
-$ export heliumSPAppId_pull=`az ad sp show --id http://$heliumacrsp_pull --query appId --output tsv` && echo $heliumSPAppId_pull
-$ az role assignment create --assignee $heliumSPAppId_pull --role acrpull --scope $acrId
+export heliumSPpw_pull=`az ad sp create-for-rbac -n http://$heliumacrsp_pull --query password --output tsv` && echo $heliumSPpw_pull
+export heliumSPAppId_pull=`az ad sp show --id http://$heliumacrsp_pull --query appId --output tsv` && echo $heliumSPAppId_pull
+az role assignment create --assignee $heliumSPAppId_pull --role acrpull --scope $acrId
 
 # Push/Pull access
-$ export heliumSPpw_push=`az ad sp create-for-rbac -n http://$heliumacrsp_push --query password --output tsv` && echo $heliumSPpw_push
-$ export heliumSPAppId_push=`az ad sp show --id http://$heliumacrsp_push --query appId --output tsv` && echo $heliumSPAppId_push
-$ az role assignment create --assignee $heliumSPAppId_push --role acrpush --scope $acrId
+export heliumSPpw_push=`az ad sp create-for-rbac -n http://$heliumacrsp_push --query password --output tsv` && echo $heliumSPpw_push
+export heliumSPAppId_push=`az ad sp show --id http://$heliumacrsp_push --query appId --output tsv` && echo $heliumSPAppId_push
+az role assignment create --assignee $heliumSPAppId_push --role acrpush --scope $acrId
 
 # Owner access
-$ export heliumSPpw_owner=`az ad sp create-for-rbac -n http://$heliumacrsp_owner --query password --output tsv` && echo $heliumSPpw_owner
-$ export heliumSPAppId_owner=`az ad sp show --id http://$heliumacrsp_owner --query appId --output tsv` && echo $heliumSPAppId_owner
-$ az role assignment create --assignee $heliumSPAppId_owner --role owner --scope $acrId
+export heliumSPpw_owner=`az ad sp create-for-rbac -n http://$heliumacrsp_owner --query password --output tsv` && echo $heliumSPpw_owner
+export heliumSPAppId_owner=`az ad sp show --id http://$heliumacrsp_owner --query appId --output tsv` && echo $heliumSPAppId_owner
+az role assignment create --assignee $heliumSPAppId_owner --role owner --scope $acrId
 ```
 
 ```bash
@@ -193,16 +193,16 @@ There are some environments that that perform role assignments during the proces
 In order to deploy a web application, an App Service Plan must first be created:
 
 ```bash
-$ az appservice plan create -n $appServicePlanName --resource-group $resourceGroupName --sku S1 --is-linux
-{
-  "freeOfferExpirationTime": "2019-05-17T17:50:45.863333",
-  "geoRegion": "East US",
-  "hostingEnvironmentProfile": null,
-  "hyperV": false,
-  "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium/providers/Microsoft.Web/serverfarms/{app_prefix}heliumapp",
-  "isSpot": false,
-  "isXenon": false,
-  "kind": "linux", ...
+az appservice plan create -n $appServicePlanName --resource-group $resourceGroupName --sku S1 --is-linux
+# {
+#   "freeOfferExpirationTime": "2019-05-17T17:50:45.863333",
+#   "geoRegion": "East US",
+#   "hostingEnvironmentProfile": null,
+#   "hyperV": false,
+#   "id": "/subscriptions/zzz0bca0-7a3c-44bd-b54c-4bb1e9zzzzzz/resourceGroups/{app_prefix}helium/providers/Microsoft.Web/serverfarms/{app_prefix}heliumapp",
+#   "isSpot": false,
+#   "isXenon": false,
+#   "kind": "linux", ...
 ```
 
 ### Create and Setup a CosmosDB
@@ -210,14 +210,14 @@ $ az appservice plan create -n $appServicePlanName --resource-group $resourceGro
 The Helium application will query a CosmosDB instance for data as part of its operation. As such, a database instance will need to be created:
 
 ```bash
-$ az cosmosdb create -n $cosmosDBName --resource-group $resourceGroupName
-{
-  "capabilities": [],
-  "consistencyPolicy": {
-    "defaultConsistencyLevel": "Session",
-    "maxIntervalInSeconds": 5,
-    "maxStalenessPrefix": 100
-  }, ...
+az cosmosdb create -n $cosmosDBName --resource-group $resourceGroupName
+# {
+#   "capabilities": [],
+#   "consistencyPolicy": {
+#     "defaultConsistencyLevel": "Session",
+#     "maxIntervalInSeconds": 5,
+#     "maxStalenessPrefix": 100
+#   }, ...
 ```
 
 Next, follow the instructions importing the neccessary data into the CosmosDB instance: [https://github.com/4-co/imdb](https://github.com/4-co/imdb).
@@ -227,15 +227,15 @@ Next, follow the instructions importing the neccessary data into the CosmosDB in
 We will use Azure Application Insights for application monitoring. First up, we must create the Application Insights instance to use. 
 
 ```bash
-$ az resource create --resource-group $resourceGroupName  --resource-type "Microsoft.Insights/components" -n $appInsightsName -l $location --properties '{"Application_Type": "Node.JS", "Flow_Type": "Redfield", "Request_Source": "IbizaAIExtension"}'
+az resource create --resource-group $resourceGroupName  --resource-type "Microsoft.Insights/components" -n $appInsightsName -l $location --properties '{"Application_Type": "Node.JS", "Flow_Type": "Redfield", "Request_Source": "IbizaAIExtension"}'
 ```
 
 Then, we retrieve the instrumentation key of this instance. 
 
 ```bash
-$ instrumentationKey=`az resource show -g "$resourceGroupName" -n "$appInsightsName" --resource-type "Microsoft.Insights/components" --query properties.InstrumentationKey` && echo $instrumentationKey
+instrumentationKey=`az resource show -g "$resourceGroupName" -n "$appInsightsName" --resource-type "Microsoft.Insights/components" --query properties.InstrumentationKey --output tsv` && echo $instrumentationKey
 
-"zz7522ec-32bd-4zfb-87df-1c20aa694azz"
+# "zz7522ec-32bd-4zfb-87df-1c20aa694azz"
 ```
 
 ### Create and Configure an Azure KeyVault
@@ -243,54 +243,54 @@ $ instrumentationKey=`az resource show -g "$resourceGroupName" -n "$appInsightsN
 An Azure KeyVault is used to store secrets in a safe and secure manner, to create a KeyVault instance:
 
 ```bash 
-$ az keyvault create -n $keyVaultName --resource-group $resourceGroupName -l $location
-{
-  "id": "/subscriptions/7060bca0-zzzz-zzzz-zzzz-4bb1e9facfac/resourceGroups/helium/providers/Microsoft.KeyVault/vaults/{app_prefix}heliumkeyvault",
-  "location": "eastus",
-  "name": "{app_prefix}heliumkeyvault",
-  "properties": {
-    "accessPolicies": [ ...
+az keyvault create -n $keyVaultName --resource-group $resourceGroupName -l $location
+# {
+#   "id": "/subscriptions/7060bca0-zzzz-zzzz-zzzz-4bb1e9facfac/resourceGroups/helium/providers/Microsoft.KeyVault/vaults/{app_prefix}heliumkeyvault",
+#   "location": "eastus",
+#   "name": "{app_prefix}heliumkeyvault",
+#   "properties": {
+#     "accessPolicies": [ ...
 ```
 
 Now, add the CosmosDB access key as a KeyVault secret by executing the following commands:
 
 ```bash
-$ masterKey=`az cosmosdb keys list -n $cosmosDBName --resource-group $resourceGroupName --query primaryMasterKey`
-$ az keyvault secret set --vault-name $keyVaultName -n "cosmosDBkey" --value "$masterKey"
-{
-  "attributes": {
-    "created": "2019-04-23T16:13:24+00:00",
-    "enabled": true,
-    "expires": null,
-    "notBefore": null,
-    "recoveryLevel": "Purgeable",
-    "updated": "2019-04-23T16:13:24+00:00" ...
+masterKey=`az cosmosdb keys list -n $cosmosDBName --resource-group $resourceGroupName --query primaryMasterKey --output tsv`
+az keyvault secret set --vault-name $keyVaultName -n "cosmosDBkey" --value "$masterKey"
+# {
+#   "attributes": {
+#     "created": "2019-04-23T16:13:24+00:00",
+#     "enabled": true,
+#     "expires": null,
+#     "notBefore": null,
+#     "recoveryLevel": "Purgeable",
+#     "updated": "2019-04-23T16:13:24+00:00" ...
 ```
 
 Next, add the App Insights key as a KeyVault secret by executing the following command:
 
 ```bash
-$ az keyvault secret set --vault-name $keyVaultName -n "AppInsightsInstrumentationKey" --value $instrumentationKey
-{
-  "attributes": {
-    "created": "2019-04-23T16:13:24+00:00",
-    "enabled": true,
-    "expires": null,
-    "notBefore": null,
-    "recoveryLevel": "Purgeable",
-    "updated": "2019-04-23T16:13:24+00:00" ...
+az keyvault secret set --vault-name $keyVaultName -n "AppInsightsInstrumentationKey" --value $instrumentationKey
+# {
+#   "attributes": {
+#     "created": "2019-04-23T16:13:24+00:00",
+#     "enabled": true,
+#     "expires": null,
+#     "notBefore": null,
+#     "recoveryLevel": "Purgeable",
+#     "updated": "2019-04-23T16:13:24+00:00" ...
 ```
 
 Finally, create a new policy that allows the service principal to have KeyVault secret read access:
 
 ```bash
-$ az keyvault set-policy -n $keyVaultName --secret-permissions get --spn $heliumSPAppId
-{
-  "id": "/subscriptions/zzzzzzzz-7a3c-zzzz-zzzz-4bb1e9facfac/resourceGroups/{app_prefix}helium/providers/Microsoft.KeyVault/vaults/{app_prefix}heliumkeyvault",
-  "location": "eastus",
-  "name": "{app_prefix}heliumkeyvault",
-  "properties": {
-    "accessPolicies": [
+az keyvault set-policy -n $keyVaultName --secret-permissions get --spn $heliumSPAppId
+# {
+#   "id": "/subscriptions/zzzzzzzz-7a3c-zzzz-zzzz-4bb1e9facfac/resourceGroups/{app_prefix}helium/providers/Microsoft.KeyVault/vaults/{app_prefix}heliumkeyvault",
+#   "location": "eastus",
+#   "name": "{app_prefix}heliumkeyvault",
+#   "properties": {
+#     "accessPolicies": [
 
 ```
 
@@ -318,20 +318,20 @@ az acr build -t ${acrName}.azurecr.io/helium:canary --registry $acrName .
 2. Login the Docker CLI to your ACR:
 
 ```bash
-$ docker login -u $heliumSPAppId_push -p $heliumSPpw_push ${acrName}.azurecr.io
+docker login -u $heliumSPAppId_push -p $heliumSPpw_push ${acrName}.azurecr.io
 Login Succeeded
 ```
 
 3. Build / Docker-ize Helium:
 
 ```bash
-$ docker build --target=release -t ${acrName}.azurecr.io/helium:canary .
+docker build --target=release -t ${acrName}.azurecr.io/helium:canary .
 ```
 
 4. Push the Helium container image to the ACR:
 
 ```bash
-$ docker push ${acrName}.azurecr.io/helium:canary
+docker push ${acrName}.azurecr.io/helium:canary
 ```
 
 ### Deploy the Helium Container Image
@@ -341,53 +341,47 @@ And finally, the last set of commands - deploying the web application from the c
 1. Create the web application:
 
 ```bash
-$ az webapp create --resource-group $resourceGroupName --plan $appServicePlanName -n $webAppName --deployment-container-image-name ${acrName}.azurecr.io/helium:canary
-{
-  "availabilityState": "Normal",
-  "clientAffinityEnabled": true,
-  "clientCertEnabled": false,
-  "clientCertExclusionPaths": null,
-  "cloningInfo": null,
-  "containerSize": 0,
-  "dailyMemoryTimeQuota": 0,
-  "defaultHostName": "{prefix}helium.azurewebsites.net" ...
+az webapp create --resource-group $resourceGroupName --plan $appServicePlanName -n $webAppName --deployment-container-image-name ${acrName}.azurecr.io/helium:canary
+# {
+#   "availabilityState": "Normal",
+#   "clientAffinityEnabled": true,
+#   "clientCertEnabled": false,
+#   "clientCertExclusionPaths": null,
+#   "cloningInfo": null,
+#   "containerSize": 0,
+#   "dailyMemoryTimeQuota": 0,
+#   "defaultHostName": "{prefix}helium.azurewebsites.net" ...
 ```
 
 2. Set environment variables (which configure Helium):
 
 ```bash
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings COSMOSDB_URL=$cosmosDBURL
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings KEY_VAULT_URL=$keyVaultURL
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings TENANT_ID=$heliumSPTenantId
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_SECRET=$heliumSPpw
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_ID=$heliumSPAppId
-
-$ az webapp config container set -g $resourceGroupName -n $webAppName -i helium:canary -r https://${acrName}.azurecr.io -u $heliumSPAppId_owner -p $heliumSPpw_owner
+# You can run these all at once
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings COSMOSDB_URL=$cosmosDBURL
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings KEY_VAULT_URL=$keyVaultURL
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings TENANT_ID=$heliumSPTenantId
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_SECRET=$heliumSPpw
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings CLIENT_ID=$heliumSPAppId
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DOCKER_ENABLE_CI=true
+az webapp config container set -g $resourceGroupName -n $webAppName -i helium:canary -r https://${acrName}.azurecr.io -u $heliumSPAppId_owner -p $heliumSPpw_owner
 ```
 
 Note: Database environment variables are automatically set to defaults for the MovieInfo reference app, unless otherwise specified:
 
 ```bash
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DB_NAME={database name}
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DB_COLLECTION={database collection}
-$ az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DEFAULT_PARTITION_KEY={default partition key}
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DB_NAME={database name}
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DB_COLLECTION={database collection}
+az webapp config appsettings set --resource-group $resourceGroupName -n $webAppName --settings DEFAULT_PARTITION_KEY={default partition key}
 ```
 
-3. Configuration via the Azure Portal is needed. Open the [Azure Portal](https://portal.azure.com) and perform the following actions:
-  - Go to your resource group _$resourceGroupName_
-  - Go to your web application _$webAppName_
-  - Go to **Container Settings**
-  - Click on **Single Container**
-  - Click on **Azure Container Registry**
-  - In **Registry** enter _$acrName_
-  - In **Image** enter _helium_
-  - In **Tag** enter _canary_
-  - Toggle **Continuous Deployment** to _on_ (if continuous deployment via webhooks is desired)
-  - Click **Save**
-  - Go to **Overview**
-  - Click **Restart**
+3. Stop and restart the webapp.
+```bash
+az webapp stop --resource-group $resourceGroupName -n $webAppName 
 
-At this point, the web application has been completely deployed! It is now accessible at: **https://${webAppName}.azurewebsites.net/api/movies**.
+az webapp start --resource-group $resourceGroupName -n $webAppName 
+```
+
+4. At this point, the web application has been completely deployed! It is now accessible at: **https://${webAppName}.azurewebsites.net/api/movies**. ***NOTE***: There is a bug where you must first go to the Azure portal, toggle a setting in your web app container settings, save, and restart the app before you will see it successfully working. 
 
 ### Configure Dashboard with Azure Monitor Metrics
 
