@@ -1,4 +1,3 @@
-// import * as keyvault from "azure-keyvault";
 import * as keyvault from "@azure/keyvault";
 import { inject, injectable, named } from "inversify";
 import * as msrestazure from "ms-rest-azure";

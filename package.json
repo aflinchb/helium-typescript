@@ -26,6 +26,8 @@
   },
   "homepage": "https://github.com/Microsoft/helium#readme",
   "dependencies": {
+    "@azure/keyvault": "^0.1.0",
+    "@azure/ms-rest-nodeauth": "^2.0.5",
     "@types/body-parser": "^1.17.0",
     "@types/documentdb": "^1.10.5",
     "@types/restify": "^7.2.9",
