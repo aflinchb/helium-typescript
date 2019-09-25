@@ -1,31 +1,33 @@
 import { DocumentQuery, RetrievedDocument } from "documentdb";
-import { inject, injectable } from "inversify";
-import { Controller, Get, interfaces, Post } from "inversify-restify-utils";
+import { inject, injectable, named } from "inversify";
+import { Controller, Get, interfaces } from "inversify-restify-utils";
 import { Request } from "restify";
 import * as HttpStatus from "http-status-codes";
 import { IDatabaseProvider } from "../../db/idatabaseprovider";
 import { ILoggingProvider } from "../../logging/iLoggingProvider";
 import { ITelemProvider } from "../../telem/itelemprovider";
-import { Actor } from "../models/actor";
-import { getDbConfigValues } from "../../config/dbconfig";
+import { QueryUtilities } from "../../utilities/queryUtilities";
 import { actorDoesNotExistError } from "../../config/constants";
 
 // Controller implementation for our actors endpoint
 @Controller("/api/actors")
 @injectable()
 export class ActorController implements interfaces.Controller {
+    private database: string;
+    private collection: string;
 
     // Instantiate the actor controller
-    constructor(@inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
+    constructor(@inject("string") @named("database") database: string,
+                @inject("string") @named("collection") collection: string,
+                @inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
                 @inject("ITelemProvider") private telem: ITelemProvider,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.cosmosDb = cosmosDb;
         this.telem = telem;
         this.logger = logger;
+        this.database = database;
+        this.collection = collection;
     }
-
-    // Get database config
-    private dbconfig: any = getDbConfigValues(this.logger);
 
     /**
      * @swagger
@@ -64,8 +66,8 @@ export class ActorController implements interfaces.Controller {
         if (actorName === undefined) {
             querySpec = {
                 parameters: [],
-                query: `SELECT root.actorId, root.type, root.name,
-                root.birthYear, root.deathYear, root.profession, root.movies
+                query: `SELECT root.id, root.partitionKey, root.actorId, root.type,
+                root.name, root.birthYear, root.deathYear, root.profession, root.textSearch, root.movies
                 FROM root
                 WHERE root.type = 'Actor'`,
             };
@@ -77,8 +79,8 @@ export class ActorController implements interfaces.Controller {
                         value: actorName.toLowerCase(),
                     },
                 ],
-                query: `SELECT root.actorId, root.type, root.name,
-                root.birthYear, root.deathYear, root.profession, root.movies
+                query: `SELECT root.id, root.partitionKey, root.actorId, root.type,
+                root.name, root.birthYear, root.deathYear, root.profession, root.textSearch, root.movies
                 FROM root
                 WHERE CONTAINS(root.textSearch, @actorname) AND root.type = 'Actor'`,
             };
@@ -89,8 +91,8 @@ export class ActorController implements interfaces.Controller {
         let results: RetrievedDocument[];
         try {
             results = await this.cosmosDb.queryDocuments(
-                this.dbconfig.database,
-                this.dbconfig.collection,
+                this.database,
+                this.collection,
                 querySpec,
                 { enableCrossPartitionQuery: true },
             );
@@ -137,9 +139,9 @@ export class ActorController implements interfaces.Controller {
         let resCode: number = HttpStatus.OK;
         let result: RetrievedDocument;
         try {
-          result = await this.cosmosDb.getDocument(this.dbconfig.database,
-            this.dbconfig.collection,
-            this.dbconfig.defaultPartitionKey,
+          result = await this.cosmosDb.getDocument(this.database,
+            this.collection,
+            QueryUtilities.getPartitionKey(actorId),
             actorId);
         } catch (err) {
           if (err.toString().includes("NotFound")) {
@@ -149,72 +151,6 @@ export class ActorController implements interfaces.Controller {
             resCode = HttpStatus.INTERNAL_SERVER_ERROR;
             result = err.toString();
           }
-        }
-
-        return res.send(resCode, result);
-    }
-
-    /**
-     * @swagger
-     *
-     * /api/actors:
-     *   post:
-     *     tags:
-     *       - Actors
-     *     requestBody:
-     *       description: Creates an actor.
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             $ref: '#/components/schemas/Actor'
-     *         application/xml:
-     *           schema:
-     *             $ref: '#/components/schemas/Actor'
-     *         application/x-www-form-urlencoded:
-     *           schema:
-     *             $ref: '#/components/schemas/Actor'
-     *         text/plain:
-     *           schema:
-     *             type: string
-     *     responses:
-     *       '201':
-     *         description: The created actor
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/Actor'
-     *       default:
-     *         description: Unexpected error
-     */
-    @Post("/")
-    public async createActor(req, res) {
-        const actor: Actor = Object.assign(Object.create(Actor.prototype),
-            JSON.parse(JSON.stringify(req.body)));
-
-        actor.validate().then(async (errors) => {
-            if (errors.length > 0) {
-                return res.send(HttpStatus.BAD_REQUEST,
-                    {
-                        // Unwrap all of the validation errors into an array
-                        message: [].concat.apply([], errors.map((x) =>
-                            Object.values(x.constraints))),
-                        status: HttpStatus.BAD_REQUEST,
-                    });
-            }
-        });
-
-        // upsert document, catch errors
-        let resCode: number = HttpStatus.CREATED;
-        let result: RetrievedDocument;
-        try {
-            result = await this.cosmosDb.upsertDocument(
-                this.dbconfig.database,
-                this.dbconfig.collection,
-                req.body,
-            );
-        } catch (err) {
-            resCode = HttpStatus.INTERNAL_SERVER_ERROR;
         }
 
         return res.send(resCode, result);

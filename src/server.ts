@@ -15,7 +15,6 @@ import { BunyanLogger } from "./logging/bunyanLogProvider";
 import { ILoggingProvider } from "./logging/iLoggingProvider";
 import { AppInsightsProvider } from "./telem/appinsightsprovider";
 import { ITelemProvider } from "./telem/itelemprovider";
-// import { DateUtilities } from "./utilities/dateUtilities";
 import EndpointLogger from "./middleware/EndpointLogger";
 import { getConfigValues } from "./config/config";
 import { html } from "./swagger-html";
@@ -50,6 +49,8 @@ import { html } from "./swagger-html";
     iocContainer.bind<string>("string").toConstantValue(config.cosmosDbUrl).whenTargetNamed("cosmosDbUrl");
     iocContainer.bind<string>("string").toConstantValue(config.cosmosDbKey).whenTargetNamed("cosmosDbKey");
     iocContainer.bind<string>("string").toConstantValue(config.insightsKey).whenTargetNamed("instrumentationKey");
+    iocContainer.bind<string>("string").toConstantValue(config.database).whenTargetNamed("database");
+    iocContainer.bind<string>("string").toConstantValue(config.collection).whenTargetNamed("collection");
 
     iocContainer.bind<ITelemProvider>("ITelemProvider").to(AppInsightsProvider).inSingletonScope();
     const telem: ITelemProvider = iocContainer.get<ITelemProvider>("ITelemProvider");

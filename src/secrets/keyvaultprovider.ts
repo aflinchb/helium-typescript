@@ -1,7 +1,9 @@
-import * as keyvault from "azure-keyvault";
+// import * as keyvault from "azure-keyvault";
+import * as keyvault from "@azure/keyvault";
 import { inject, injectable, named } from "inversify";
 import * as msrestazure from "ms-rest-azure";
 import { ILoggingProvider } from "../logging/iLoggingProvider";
+import { AzureCliCredentials } from "@azure/ms-rest-nodeauth";
 
 /**
  * Handles accessing secrets from Azure Key vault.
@@ -13,19 +15,10 @@ export class KeyVaultProvider {
     /**
      * Creates a new instance of the KeyVaultProvider class.
      * @param url The KeyVault URL
-     * @param clientId The service principal client id that has 'secret read' access.
-     * @param clientSecret The password for the provided service principal.
-     * @param tenantId The id of the tenant that the service principal is a member of.
      */
     constructor(private url: string,
-                private clientId: string,
-                private clientSecret: string,
-                private tenantId: string,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.url = url;
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.tenantId = tenantId;
         this.logger = logger;
     }
 
@@ -45,7 +38,7 @@ export class KeyVaultProvider {
                 this.logger.Error(Error(), "Unable to find secret " + name);
                 throw new Error(`Unable to find secret ${name}`);
             });
-        this.logger.Trace("Got secret from KeyVault");
+        this.logger.Trace("Got secret " + name + " from KeyVault");
         return secret;
     }
 
@@ -56,9 +49,10 @@ export class KeyVaultProvider {
     private async _initialize() {
 
         this.logger.Trace("Initializing KeyVault");
-        const creds: any = this.clientId === undefined || this.clientId === "" ?
-                    await msrestazure.loginWithAppServiceMSI({resource: "https://vault.azure.net"}) :
-                    await msrestazure.loginWithServicePrincipalSecret(this.clientId, this.clientSecret, this.tenantId);
+        const devString: string = "ISDEV";
+        const creds: any = process.env[devString] === "false" ?
+                            await msrestazure.loginWithAppServiceMSI({resource: "https://vault.azure.net"}) :
+                                await AzureCliCredentials.create({ resource: "https://vault.azure.net" });
 
         this.client = new keyvault.KeyVaultClient(creds);
     }

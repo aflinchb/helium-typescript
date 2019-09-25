@@ -26,7 +26,7 @@ import { IValidatable } from "./ivalidatable";
  *         - textSearch
  *         - title
  *         - type
- *         - key
+ *         - partitionKey
  *       properties:
  *         id:
  *           type: string
@@ -40,9 +40,11 @@ import { IValidatable } from "./ivalidatable";
  *           type: string
  *           enum:
  *             - Movie
- *         key:
+ *         partitionKey:
  *           type: string
  *         year:
+ *           type: number
+ *         runtime:
  *           type: number
  *         rating:
  *           type: number
@@ -90,15 +92,16 @@ export class Movie implements IValidatable {
 
     @IsNotEmpty()
     @NotEquals((x) => x.trim.length() > 0)
-    public key: string;
+    public partitionKey: string;
 
     constructor(
         id: string,
         movieId: string,
         title: string,
         textSearch: string,
-        key: string,
+        partitionKey: string,
         public year?: number,
+        public runtime?: number,
         public rating?: number,
         public votes?: number,
         public genres?: string[],
@@ -108,8 +111,9 @@ export class Movie implements IValidatable {
         this.title = title;
         this.textSearch = textSearch;
         this.type = "Movie";
-        this.key = key;
+        this.partitionKey = partitionKey;
         this.year = year;
+        this.runtime = runtime;
         this.rating = rating;
         this.votes = votes;
         this.genres = genres;

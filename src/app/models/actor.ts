@@ -26,7 +26,7 @@ import { Movie } from "./movie";
  *         - textSearch
  *         - name
  *         - type
- *         - key
+ *         - partitionKey
  *       properties:
  *         id:
  *           type: string
@@ -40,9 +40,11 @@ import { Movie } from "./movie";
  *           type: string
  *           enum:
  *             - Actor
- *         key:
+ *         partitionKey:
  *           type: string
  *         birthYear:
+ *           type: number
+ *         deathYear:
  *           type: number
  *         profession:
  *           type: array
@@ -86,15 +88,16 @@ export class Actor implements IValidatable {
 
     @IsNotEmpty()
     @NotEquals((x) => x.trim.length() > 0)
-    public key: string;
+    public partitionKey: string;
 
     constructor(
         id: string,
         actorId: string,
         name: string,
         textSearch: string,
-        key: string,
+        partitionKey: string,
         public birthYear?: number,
+        public deathYear?: number,
         public profession?: string[],
         public movies?: Movie[]) {
         this.id = id;
@@ -102,8 +105,9 @@ export class Actor implements IValidatable {
         this.name = name;
         this.textSearch = textSearch;
         this.type = "Actor";
-        this.key = key;
+        this.partitionKey = partitionKey;
         this.birthYear = birthYear;
+        this.deathYear = deathYear;
         this.profession = profession;
         this.movies = movies;
     }

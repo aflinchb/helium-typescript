@@ -1,13 +1,11 @@
 import { RetrievedDocument } from "documentdb";
-import { inject, injectable } from "inversify";
+import { inject, injectable, named } from "inversify";
 import { Controller, Get, interfaces } from "inversify-restify-utils";
 import { Request } from "restify";
 import * as HttpStatus from "http-status-codes";
 import { IDatabaseProvider } from "../../db/idatabaseprovider";
 import { ILoggingProvider } from "../../logging/iLoggingProvider";
 import { ITelemProvider } from "../../telem/itelemprovider";
-import { DateUtilities } from "../../utilities/dateUtilities";
-import { getDbConfigValues } from "../../config/dbconfig";
 
 /**
  * controller implementation for our genres endpoint
@@ -15,17 +13,20 @@ import { getDbConfigValues } from "../../config/dbconfig";
 @Controller("/api/genres")
 @injectable()
 export class GenreController implements interfaces.Controller {
+  private database: string;
+  private collection: string;
 
-    constructor(@inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
+    constructor(@inject("string") @named("database") database: string,
+                @inject("string") @named("collection") collection: string,
+                @inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
                 @inject("ITelemProvider") private telem: ITelemProvider,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.cosmosDb = cosmosDb;
         this.telem = telem;
         this.logger = logger;
+        this.database = database;
+        this.collection = collection;
     }
-
-    // Get database config
-    private dbconfig: any = getDbConfigValues(this.logger);
 
     /**
      * @swagger
@@ -58,8 +59,8 @@ export class GenreController implements interfaces.Controller {
         let results: RetrievedDocument[];
         try {
           results = await this.cosmosDb.queryDocuments(
-            this.dbconfig.database,
-            this.dbconfig.collection,
+            this.database,
+            this.collection,
             querySpec,
             { enableCrossPartitionQuery: true },
           );

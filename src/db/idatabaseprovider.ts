@@ -11,30 +11,6 @@ export interface IDatabaseProvider {
                    collection: string,
                    query: DocumentQuery,
                    options?: FeedOptions): Promise<RetrievedDocument[]>;
-    /**
-     * Upserts a document in CosmosDB.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
-     * @param content The content of the document to insert.
-     */
-    upsertDocument(database: string,
-                   collection: string,
-                   content: any): Promise<RetrievedDocument>;
-
-    /**
-     * Runs the given query against CosmosDB.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
-     * @param partitionKey The partition key for the document.
-     * @param documentId The document to be deleted's id.
-     * @param options Optional options object.
-     */
-    deleteDocument(
-        database: string,
-        collection: string,
-        partitionKey: string,
-        documentId: string,
-        options?: FeedOptions): Promise<string>;
 
     /**
      * Runs the given query against CosmosDB.

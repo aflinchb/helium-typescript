@@ -4,7 +4,7 @@ FROM node:dubnium-alpine AS base
 RUN adduser -S appuser
 WORKDIR /app
 COPY scripts ./scripts
-EXPOSE 3000
+EXPOSE 4120
 COPY package.json .
  
 #
@@ -35,7 +35,7 @@ ENTRYPOINT [ "sh", "./scripts/start-service.sh" ]
 # ---- Integration Test ----
 # run integration tests
 FROM dependencies AS integration
-ARG integration_server_url=localhost:3000
+ARG integration_server_url=localhost:4120
 ENV integration_server_url=${integration_server_url}
 COPY . .
 COPY --from=dependencies /app/prod_node_modules ./node_modules

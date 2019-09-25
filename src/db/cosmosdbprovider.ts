@@ -130,61 +130,6 @@ export class CosmosDBProvider {
     }
 
     /**
-     * Delete the given document.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
-     * @param partitionKey The partition key for the document.
-     * @param documentId ID of document to be deleted.
-     * @param options Optional options, not currently implemented.
-     */
-    public async deleteDocument(
-        database: string,
-        collection: string,
-        partitionKey: string,
-        documentId: string,
-        options?: FeedOptions): Promise<string> {
-
-        // Wrap all functionality in a promise to avoid forcing the caller to use callbacks
-        return new Promise((resolve, reject) => {
-            const documentLink = CosmosDBProvider._buildDocumentLink(database, collection, documentId);
-
-            this.logger.Trace("In CosmosDB deleteDocument");
-            const timer: () => number = DateUtilities.getTimer();
-            this.docDbClient.deleteDocument(
-                documentLink,
-                { partitionKey },
-                (err, resource, headers) => {
-                    // Check for and log the db op RU cost
-                    if (headers["x-ms-request-charge"]) {
-                        this.logger.Trace(`deleteDocument RU Cost: ${headers["x-ms-request-charge"]}`);
-                        const ruMetricTelem: any = this.telem.getMetricTelemetryObject(
-                            "CosmosDB: deleteDocument RU Cost",
-                            headers["x-ms-request-charge"],
-                        );
-                        this.telem.trackMetric(ruMetricTelem);
-                    }
-
-                    // Get an object to track delete time metric
-                    const metricTelem: any = this.telem.getMetricTelemetryObject(
-                        "CosmosDB: deleteDocument Duration",
-                        timer(),
-                    );
-
-                    // Track CosmosDB query time metric
-                    this.telem.trackMetric(metricTelem);
-
-                    if (err) {
-                        this.logger.Error(Error(err.body), "Error in deleteDocument");
-                        reject(`${err.code}: ${err.body}`);
-                    } else {
-                        this.logger.Trace("deleteDocument returned success");
-                        resolve("done");
-                    }
-                });
-        });
-    }
-
-    /**
      * Runs the given query against CosmosDB.
      * @param database The database the document is in.
      * @param query The query to select the documents.
@@ -225,50 +170,6 @@ export class CosmosDBProvider {
                 } else {
                     this.logger.Error(Error(err.body), "queryCollections returned error");
                     reject(`${err.code}: ${err.body}`);
-                }
-            });
-        });
-    }
-
-    /**
-     * Upserts a document in CosmosDB.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
-     * @param content The content of the document to insert.
-     */
-    public async upsertDocument(database: string, collection: string, content: any): Promise<RetrievedDocument> {
-
-        // Wrap all functionality in a promise to avoid forcing the caller to use callbacks
-        return new Promise((resolve, reject) => {
-            this.logger.Trace("In CosmosDB upsertDocument");
-
-            const timer: () => number = DateUtilities.getTimer();
-            const collectionLink: string = CosmosDBProvider._buildCollectionLink(database, collection);
-            this.docDbClient.upsertDocument(collectionLink, content, (err, result, headers) => {
-                // Check for and log the db op RU cost
-                if (headers["x-ms-request-charge"]) {
-                    this.logger.Trace(`upsertDocument RU Cost: ${headers["x-ms-request-charge"]}`);
-                    const ruMetricTelem: any = this.telem.getMetricTelemetryObject(
-                        "CosmosDB: upsertDocument RU Cost",
-                        headers["x-ms-request-charge"],
-                    );
-                    this.telem.trackMetric(ruMetricTelem);
-                }
-
-                // Get an object to track upsertDocument time metric
-                const metricTelem: any = this.telem.getMetricTelemetryObject(
-                    "CosmosDB: upsertDocument Duration",
-                    timer(),
-                );
-
-                // Track CosmosDB query time metric
-                this.telem.trackMetric(metricTelem);
-                if (err == null) {
-                    this.logger.Trace("Returning from upsert documents successfully");
-                    resolve(result);
-                } else {
-                    this.logger.Error(Error(err.body), "upsertDocument returned error");
-                    reject(err);
                 }
             });
         });
