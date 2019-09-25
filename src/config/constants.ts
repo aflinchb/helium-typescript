@@ -8,7 +8,7 @@ export const cosmosDatabase = "CosmosDatabase";
 export const cosmosCollection = "CosmosCollection";
 export const appInsightsKey = "AppInsightsKey";
 
-export const healthResult = "Movies: 100\r\nActors: 553\r\nGenres: 20";
+export const healthResult = "Movies: 100\r\nActors: 531\r\nGenres: 19";
 export const healthzError = "Healthz Failed:\r\n{0}";
 
 export const portConstant = "Port";
