@@ -3,7 +3,7 @@ import * as bodyParser from "body-parser";
 import { Container } from "inversify";
 import { interfaces, InversifyRestifyServer, TYPE } from "inversify-restify-utils";
 import "reflect-metadata";
-import * as restify from "restify";
+// import * as restify from "restify";
 import * as swaggerJSDoc from "swagger-jsdoc";
 import { ActorController } from "./app/controllers/actor";
 import { GenreController } from "./app/controllers/genre";
@@ -18,6 +18,8 @@ import { ITelemProvider } from "./telem/itelemprovider";
 import EndpointLogger from "./middleware/EndpointLogger";
 import { getConfigValues } from "./config/config";
 import { html } from "./swagger-html";
+
+var restify = require('restify');
 
 (async () => {
     /**
@@ -61,75 +63,75 @@ import { html } from "./swagger-html";
     log.Trace("Created the Restify server");
 
     try {
-    // listen for requests
-    server.setConfig((app) => {
-        /**
-         * Parse requests of content-type - application/x-www-form-urlencoded
-         */
-        app.use(bodyParser.urlencoded({ extended: true }));
+        // listen for requests
+        server.setConfig((app) => {
+            /**
+             * Parse requests of content-type - application/x-www-form-urlencoded
+             */
+            app.use(bodyParser.urlencoded({ extended: true }));
 
-        /**
-         * Parses HTTP query string and makes it available in req.query.
-         * Setting mapParams to false prevents additional params in query to be merged in req.Params
-         */
-        app.use(restify.plugins.queryParser({ mapParams: false }));
+            /**
+             * Parses HTTP query string and makes it available in req.query.
+             * Setting mapParams to false prevents additional params in query to be merged in req.Params
+             */
+            app.use(restify.plugins.queryParser({ mapParams: false }));
 
-        /**
-         * Set Content-Type as json for reading and parsing the HTTP request body
-         */
+            /**
+             * Set Content-Type as json for reading and parsing the HTTP request body
+             */
 
-        app.use(bodyParser.json());
+            app.use(bodyParser.json());
 
-        /**
-         * Configure the requestlogger plugin to use Bunyan for correlating child loggers
-         */
-        app.use(restify.plugins.requestLogger());
+            /**
+             * Configure the requestlogger plugin to use Bunyan for correlating child loggers
+             */
+            app.use(restify.plugins.requestLogger());
 
-        /**
-         * Configure middleware function to be called for every endpoint.
-         * This function logs the endpoint being called and measures duration taken for the call.
-         */
-        app.use(EndpointLogger(iocContainer));
+            /**
+             * Configure middleware function to be called for every endpoint.
+             * This function logs the endpoint being called and measures duration taken for the call.
+             */
+            app.use(EndpointLogger(iocContainer));
 
-        const options: any = {
-            // Path to the API docs
-            apis: [`${__dirname}/app/models/*.js`, `${__dirname}/app/controllers/*.js`],
-            definition: {
-                info: {
-                    title: "Helium", // Title (required)
-                    version: "1.0.0", // Version (required)
+            const options: any = {
+                // Path to the API docs
+                apis: [`${__dirname}/app/models/*.js`, `${__dirname}/app/controllers/*.js`],
+                definition: {
+                    info: {
+                        title: "Helium", // Title (required)
+                        version: "1.0.0", // Version (required)
+                    },
+                    openapi: "3.0.2", // Specification (optional, defaults to swagger: '2.0')
                 },
-                openapi: "3.0.2", // Specification (optional, defaults to swagger: '2.0')
-            },
-        };
+            };
 
-        // Initialize swagger-jsdoc -> returns validated swagger spec in json format
-        const swaggerSpec: any = swaggerJSDoc(options);
+            // Initialize swagger-jsdoc -> returns validated swagger spec in json format
+            const swaggerSpec: any = swaggerJSDoc(options);
 
-        log.Trace("Setting up swagger.json to serve statically");
-        app.get("/swagger.json", (req, res) => {
-            res.setHeader("Content-Type", "application/json");
-            res.send(swaggerSpec);
-        });
-
-        log.Trace("Setting up index.html to serve static");
-        app.get("/", (req, res) => {
-            res.writeHead(200, {
-                "Content-Length": Buffer.byteLength(html),
-                "Content-Type": "text/html",
+            log.Trace("Setting up swagger.json to serve statically");
+            app.get("/swagger.json", (req, res) => {
+                res.setHeader("Content-Type", "application/json");
+                res.send(swaggerSpec);
             });
-            res.write(html);
-            res.end();
-        });
 
-        log.Trace("Setting up node modules to serve statically");
-        app.get("/node_modules/swagger-ui-dist/*", restify.plugins.serveStatic({
-            directory: __dirname + "/..",
-        }));
-    }).build().listen(config.port, () => {
-        log.Trace("Server is listening on port " + config.port);
-        telem.trackEvent("API Server: Server started on port " + config.port);
-    });
+            log.Trace("Setting up index.html to serve static");
+            app.get("/", (req, res) => {
+                res.writeHead(200, {
+                    "Content-Length": Buffer.byteLength(html),
+                    "Content-Type": "text/html",
+                });
+                res.write(html);
+                res.end();
+            });
+
+            log.Trace("Setting up node modules to serve statically");
+            app.get("/node_modules/swagger-ui-dist/*", restify.plugins.serveStatic({
+                directory: __dirname + "/..",
+            }));
+        }).build().listen(config.port, () => {
+            log.Trace("Server is listening on port " + config.port);
+            telem.trackEvent("API Server: Server started on port " + config.port);
+        });
 
     } catch (err) {
         log.Error(Error(err), "Error in setting up the server!");

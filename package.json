@@ -44,7 +44,6 @@
     "reflect-metadata": "^0.1.13",
     "restify": "^8.4.0",
     "restify-errors": "^7.0.0",
-    "restify-plugins": "^1.6.0",
     "swagger-jsdoc": "^3.4.0",
     "swagger-ui-dist": "^3.22.2",
     "ts-node": "^3.3.0",
