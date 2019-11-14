@@ -1,5 +1,5 @@
 # ---- Base Node ----
-FROM node:dubnium-alpine AS base
+FROM node:current-alpine AS base
 # Create a user
 RUN adduser -S appuser
 WORKDIR /app
@@ -11,7 +11,10 @@ COPY package.json .
 # ---- Dependencies ----
 FROM base AS dependencies
 RUN npm set progress=false && npm config set depth 0
-RUN npm install --production 
+RUN apk add --no-cache --virtual .gyp \
+        make \
+        python \
+        && npm install --production 
 RUN cp -R node_modules prod_node_modules
 RUN npm install
  

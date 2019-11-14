@@ -1,8 +1,7 @@
 import * as keyvault from "@azure/keyvault";
 import { inject, injectable, named } from "inversify";
-import * as msrestazure from "ms-rest-azure";
 import { ILoggingProvider } from "../logging/iLoggingProvider";
-import { AzureCliCredentials } from "@azure/ms-rest-nodeauth";
+import * as msRestNodeAuth from "@azure/ms-rest-nodeauth";
 
 /**
  * Handles accessing secrets from Azure Key vault.
@@ -32,9 +31,9 @@ export class KeyVaultProvider {
         }
         // An empty string for 'secretVersion' returns the latest version
         const secret: string = await this.client.getSecret(this.url, name, "")
-            .then((s) =>  (s.value) as string)
-            .catch((_) => {
-                this.logger.Error(Error(), "Unable to find secret " + name);
+            .then((s) => (s.value) as string)
+            .catch((e) => {
+                this.logger.Error(Error(), "Unable to find secret " + name + " " + e);
                 throw new Error(`Unable to find secret ${name}`);
             });
         this.logger.Trace("Got secret " + name + " from KeyVault");
@@ -48,10 +47,11 @@ export class KeyVaultProvider {
     private async _initialize() {
 
         this.logger.Trace("Initializing KeyVault");
+
         const devString: string = "ISDEV";
         const creds: any = process.env[devString] === "false" ?
-                            await msrestazure.loginWithAppServiceMSI({resource: "https://vault.azure.net"}) :
-                                await AzureCliCredentials.create({ resource: "https://vault.azure.net" });
+            await msRestNodeAuth.loginWithAppServiceMSI({ resource: "https://vault.azure.net" }) :
+            await msRestNodeAuth.AzureCliCredentials.create({ resource: "https://vault.azure.net" });
 
         this.client = new keyvault.KeyVaultClient(creds);
     }

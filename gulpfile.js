@@ -5,19 +5,19 @@ const JSON_FILES = ['src/*.json', 'src/**/*.json'];
 // pull in the project TypeScript config
 const tsProject = ts.createProject('tsconfig.json');
 
-gulp.task('scripts', () => {
+gulp.task('scripts', gulp.series(() => {
   const tsResult = tsProject.src()
-  .pipe(tsProject());
+    .pipe(tsProject());
   return tsResult.js.pipe(gulp.dest('dist'));
-});
+}));
 
-gulp.task('watch', ['scripts'], () => {
+gulp.task('watch', gulp.series(['scripts'], () => {
   gulp.watch('src/**/*.ts', ['scripts']);
-});
+}));
 
-gulp.task('assets', function() {
+gulp.task('assets', gulp.series(function () {
   return gulp.src(JSON_FILES)
-  .pipe(gulp.dest('dist'));
-});
+    .pipe(gulp.dest('dist'));
+}));
 
-gulp.task('default', ['watch', 'assets']);
+gulp.task('default', gulp.series(['watch', 'assets']));

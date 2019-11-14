@@ -1,12 +1,16 @@
 import { ILoggingProvider } from "../logging/iLoggingProvider";
 import { KeyVaultProvider } from "../secrets/keyvaultprovider";
-import { keyVaultName, cosmosCollection, cosmosDatabase, cosmosKey, cosmosUrl,
-    appInsightsKey, portConstant } from "./constants";
+import {
+    keyVaultName, cosmosCollection, cosmosDatabase, cosmosKey, cosmosUrl,
+    appInsightsKey, portConstant,
+} from "./constants";
 
 // Gets configuration details needed to connect to KeyVault, CosmosDB, and AppInsights.
 export async function getConfigValues(
-    log: ILoggingProvider): Promise<{ port: number, cosmosDbKey: string, cosmosDbUrl: string,
-        database: string, collection: string, insightsKey: string }> {
+    log: ILoggingProvider): Promise<{
+        port: number, cosmosDbKey: string, cosmosDbUrl: string,
+        database: string, collection: string, insightsKey: string,
+    }> {
     // port comes from keyvault or default value if not set
     let port: number;
     const PORT_DEFAULT: number = 4120;
@@ -35,7 +39,7 @@ export async function getConfigValues(
     try {
         try {
             port = parseInt(await keyvault.getSecret(portConstant), 10);
-        } catch {
+        } catch (e) {
             log.Trace("Port not stored in keyvault.");
         }
 
