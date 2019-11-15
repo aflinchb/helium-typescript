@@ -15,5 +15,5 @@ export interface IDatabaseProvider {
      * @param documentId The id of the document to query.
      */
     getDocument(partitionKey: string,
-                documentId: string): Promise<any>;         
+                documentId: string): Promise<any>;
 }
