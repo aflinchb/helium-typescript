@@ -69,6 +69,13 @@ export async function getConfigValues(
         log.Error(Error(), "Failed to get secrets from KeyVault. Falling back to env vars for secrets");
     }
 
+    // try {
+    //     const cosmosProvider: CosmosDBProvider = new CosmosDBProvider(cosmosDbUrl, cosmosDbKey, database, collection, log);
+    //     cosmosProvider.initialize();
+    // } catch (e) {
+    //     log.Error(Error(), "Failed to initialize cosmos connection");
+    // }
+
     log.Trace("Returning config values");
     return {
         port,

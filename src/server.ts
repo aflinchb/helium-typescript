@@ -97,7 +97,7 @@ import { html } from "./swagger-html";
                 definition: {
                     info: {
                         title: "Helium", // Title (required)
-                        version: "1.0.9", // Version (required)
+                        version: "1.0.5", // Version (required)
                     },
                     openapi: "3.0.2", // Specification (optional, defaults to swagger: '2.0')
                 },
@@ -132,6 +132,6 @@ import { html } from "./swagger-html";
         });
 
     } catch (err) {
-        log.Error(Error(err), "Error in setting up the server!");
+        log.Error(Error(err), "Error in setting up the server! " + err);
     }
 })();

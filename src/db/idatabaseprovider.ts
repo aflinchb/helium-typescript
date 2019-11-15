@@ -1,35 +1,19 @@
-import {DocumentQuery, FeedOptions, RetrievedDocument} from "documentdb";
+import { SqlQuerySpec, Item, FeedOptions } from "@azure/cosmos";
+import { Actor } from "../app/models/actor";
 
 export interface IDatabaseProvider {
     /**
      * Runs the given query against CosmosDB.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
      * @param query The query to select the documents.
      */
-    queryDocuments(database: string,
-                   collection: string,
-                   query: DocumentQuery,
-                   options?: FeedOptions): Promise<RetrievedDocument[]>;
-
-    /**
-     * Runs the given query against CosmosDB.
-     * @param database The database the document is in.
-     * @param query The query to select the documents.
-     */
-    queryCollections(database: string,
-                     query: DocumentQuery): Promise<RetrievedDocument[]>;
+    queryDocuments(query: SqlQuerySpec,
+                   options?: FeedOptions): Promise<any[]>;
 
     /**
      * Retrieves a specific document by Id.
-     * @param database The database the document is in.
-     * @param collection The collection the document is in.
      * @param partitionKey The partition key for the document.
      * @param documentId The id of the document to query.
      */
-    getDocument(database: string,
-                collection: string,
-                partitionKey: string,
-                documentId: string): Promise<RetrievedDocument>;
-
+    getDocument(partitionKey: string,
+                documentId: string): Promise<any>;         
 }

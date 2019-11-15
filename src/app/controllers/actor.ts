@@ -1,4 +1,4 @@
-import { DocumentQuery, RetrievedDocument } from "documentdb";
+import { SqlQuerySpec, FeedOptions, Item } from "@azure/cosmos";
 import { inject, injectable, named } from "inversify";
 import { Controller, Get, interfaces } from "inversify-restify-utils";
 import { Request } from "restify";
@@ -8,25 +8,20 @@ import { ILoggingProvider } from "../../logging/iLoggingProvider";
 import { ITelemProvider } from "../../telem/itelemprovider";
 import { QueryUtilities } from "../../utilities/queryUtilities";
 import { actorDoesNotExistError } from "../../config/constants";
+import { Actor } from "../models/actor";
 
 // Controller implementation for our actors endpoint
 @Controller("/api/actors")
 @injectable()
 export class ActorController implements interfaces.Controller {
-    private database: string;
-    private collection: string;
 
     // Instantiate the actor controller
-    constructor(@inject("string") @named("database") database: string,
-                @inject("string") @named("collection") collection: string,
-                @inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
+    constructor(@inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
                 @inject("ITelemProvider") private telem: ITelemProvider,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.cosmosDb = cosmosDb;
         this.telem = telem;
         this.logger = logger;
-        this.database = database;
-        this.collection = collection;
     }
 
     /**
@@ -58,7 +53,7 @@ export class ActorController implements interfaces.Controller {
     @Get("/")
     public async getAll(req: Request, res) {
 
-        let querySpec: DocumentQuery;
+        let querySpec: SqlQuerySpec;
 
         // Actor name is an optional query param.
         // If not specified, we should query for all actors.
@@ -88,13 +83,11 @@ export class ActorController implements interfaces.Controller {
 
         // make query, catch errors
         let resCode: number = HttpStatus.OK;
-        let results: RetrievedDocument[];
+        let results: Actor[];
         try {
             results = await this.cosmosDb.queryDocuments(
-                this.database,
-                this.collection,
                 querySpec,
-                { enableCrossPartitionQuery: true },
+                { maxItemCount: 2000 },
             );
         } catch (err) {
             resCode = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -137,20 +130,19 @@ export class ActorController implements interfaces.Controller {
 
         // make query, catch errors
         let resCode: number = HttpStatus.OK;
-        let result: RetrievedDocument;
+        let result: Actor;
         try {
-          result = await this.cosmosDb.getDocument(this.database,
-            this.collection,
-            QueryUtilities.getPartitionKey(actorId),
-            actorId);
+            result = await this.cosmosDb.getDocument(
+                QueryUtilities.getPartitionKey(actorId),
+                actorId);
         } catch (err) {
-          if (err.toString().includes("NotFound")) {
-            resCode = HttpStatus.NOT_FOUND;
-            result = actorDoesNotExistError;
-          } else {
-            resCode = HttpStatus.INTERNAL_SERVER_ERROR;
-            result = err.toString();
-          }
+            if (err.toString().includes("NotFound")) {
+                resCode = HttpStatus.NOT_FOUND;
+                result = actorDoesNotExistError;
+            } else {
+                resCode = HttpStatus.INTERNAL_SERVER_ERROR;
+                result = err.toString();
+            }
         }
 
         return res.send(resCode, result);

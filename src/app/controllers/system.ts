@@ -1,29 +1,24 @@
-import { DocumentQuery, RetrievedDocument } from "documentdb";
+import { SqlQuerySpec, FeedOptions, Item } from "@azure/cosmos";
 import { inject, injectable, named } from "inversify";
 import { Controller, Get, interfaces } from "inversify-restify-utils";
 import * as HttpStatus from "http-status-codes";
 import { IDatabaseProvider } from "../../db/idatabaseprovider";
 import { ILoggingProvider } from "../../logging/iLoggingProvider";
 import { ITelemProvider } from "../../telem/itelemprovider";
+
 /**
  * controller implementation for our system endpoint
  */
 @Controller("/healthz")
 @injectable()
 export class SystemController implements interfaces.Controller {
-    private database: string;
-    private collection: string;
 
-    constructor(@inject("string") @named("database") database: string,
-                @inject("string") @named("collection") collection: string,
-                @inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
+    constructor(@inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
                 @inject("ITelemProvider") private telem: ITelemProvider,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.cosmosDb = cosmosDb;
         this.telem = telem;
         this.logger = logger;
-        this.database = database;
-        this.collection = collection;
     }
 
     /**
@@ -55,20 +50,20 @@ export class SystemController implements interfaces.Controller {
         let resMessage: string = "";
 
         try {
-           resMessage += await this.getcount("Movie") + "\r\n";
-           resMessage += await this.getcount("Actor") + "\r\n";
-           resMessage += await this.getcount("Genre");
+            resMessage += await this.getcount("Movie") + "\r\n";
+            resMessage += await this.getcount("Actor") + "\r\n";
+            resMessage += await this.getcount("Genre");
         } catch (e) {
-           resCode = HttpStatus.INTERNAL_SERVER_ERROR;
-           resMessage = "Healthz Exception: " + e;
+            resCode = HttpStatus.INTERNAL_SERVER_ERROR;
+            resMessage = "Healthz Exception: " + e;
         }
         res.setHeader("Content-Type", "text/plain");
         return res.send(resCode, resMessage);
     }
 
     private async getcount(type) {
-        let results: RetrievedDocument[];
-        const querySpec: DocumentQuery = {
+        let results: string[];
+        const querySpec: SqlQuerySpec = {
             parameters: [
                 {
                     name: "@type",
@@ -79,10 +74,8 @@ export class SystemController implements interfaces.Controller {
         };
 
         results = await this.cosmosDb.queryDocuments(
-            this.database,
-            this.collection,
             querySpec,
-            { enableCrossPartitionQuery: true },
+            { maxItemCount: 2000 },
         );
 
         return type + "s: " + results[0];

@@ -36,13 +36,13 @@
     "body-parser": "^1.19.0",
     "bunyan": "^1.8.12",
     "class-validator": "^0.11.0",
-    "documentdb": "^1.15.3",
     "http-status-codes": "^1.4.0",
     "inversify": "^5.0.1",
     "inversify-restify-utils": "^3.4.0",
     "reflect-metadata": "^0.1.13",
     "restify": "^8.3.0",
     "swagger-jsdoc": "^3.4.0",
+    "swagger-ui-dist": "^3.24.2",
     "uuid": "^3.3.3"
   },
   "devDependencies": {

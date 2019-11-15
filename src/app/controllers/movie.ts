@@ -1,4 +1,4 @@
-import { DocumentQuery, RetrievedDocument } from "documentdb";
+import { SqlQuerySpec, FeedOptions, Item } from "@azure/cosmos";
 import { inject, injectable, named } from "inversify";
 import { Controller, Get, interfaces } from "inversify-restify-utils";
 import * as HttpStatus from "http-status-codes";
@@ -7,6 +7,7 @@ import { ILoggingProvider } from "../../logging/iLoggingProvider";
 import { ITelemProvider } from "../../telem/itelemprovider";
 import { QueryUtilities } from "../../utilities/queryUtilities";
 import { movieDoesNotExistError } from "../../config/constants";
+import { Movie } from "../models/movie";
 
 /**
  * controller implementation for our movies endpoint
@@ -14,22 +15,16 @@ import { movieDoesNotExistError } from "../../config/constants";
 @Controller("/api/movies")
 @injectable()
 export class MovieController implements interfaces.Controller {
-    private database: string;
-    private collection: string;
 
     // Must be type Any so we can return the string in GET API calls.
     private static readonly movieDoesNotExistError: any = "A Movie with that ID does not exist";
 
-    constructor(@inject("string") @named("database") database: string,
-                @inject("string") @named("collection") collection: string,
-                @inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
+    constructor(@inject("IDatabaseProvider") private cosmosDb: IDatabaseProvider,
                 @inject("ITelemProvider") private telem: ITelemProvider,
                 @inject("ILoggingProvider") private logger: ILoggingProvider) {
         this.cosmosDb = cosmosDb;
         this.telem = telem;
         this.logger = logger;
-        this.database = database;
-        this.collection = collection;
     }
 
     /**
@@ -60,7 +55,7 @@ export class MovieController implements interfaces.Controller {
      */
     @Get("/")
     public async getAll(req, res) {
-        let querySpec: DocumentQuery;
+        let querySpec: SqlQuerySpec;
 
         // Movie name is an optional query param.
         // If not specified, we should query for all movies.
@@ -90,13 +85,11 @@ export class MovieController implements interfaces.Controller {
         }
 
         let resCode: number = HttpStatus.OK;
-        let results: RetrievedDocument[];
+        let results: Movie[];
         try {
             results = await this.cosmosDb.queryDocuments(
-                this.database,
-                this.collection,
                 querySpec,
-                { enableCrossPartitionQuery: true },
+                { maxItemCount: 2000 },
             );
         } catch (err) {
             resCode = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -137,10 +130,9 @@ export class MovieController implements interfaces.Controller {
         const movieId: string = req.params.id;
 
         let resCode: number = HttpStatus.OK;
-        let result: RetrievedDocument;
+        let result: Movie;
         try {
-            result = await this.cosmosDb.getDocument(this.database,
-                this.collection,
+            result = await this.cosmosDb.getDocument(
                 QueryUtilities.getPartitionKey(movieId),
                 movieId);
         } catch (err) {
